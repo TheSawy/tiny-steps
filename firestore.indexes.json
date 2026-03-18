@@ -1,0 +1,10 @@
+{
+  "indexes": [
+    { "collectionGroup": "events", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "timestamp", "order": "DESCENDING" }] },
+    { "collectionGroup": "weights", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "date", "order": "ASCENDING" }] },
+    { "collectionGroup": "appointments", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "date", "order": "ASCENDING" }] },
+    { "collectionGroup": "calendar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "date", "order": "ASCENDING" }] },
+    { "collectionGroup": "healthLog", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "timestamp", "order": "DESCENDING" }] }
+  ],
+  "fieldOverrides": []
+}
