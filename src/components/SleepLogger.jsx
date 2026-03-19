@@ -4,6 +4,7 @@ import { generateId, formatTime, formatDuration, getTimeSince, getAgeRecommendat
 import { Icon } from "./Icon.jsx";
 import { Modal } from "./Modal.jsx";
 import { TimerDisplay } from "./TimerDisplay.jsx";
+import { NextWindowBadge } from "./NextWindowBadge.jsx";
 
 // ============================================================
 // SLEEP LOGGER (Gentle — with context notes for regressions, illness, etc.)

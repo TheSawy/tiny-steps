@@ -3,7 +3,7 @@ import { C, S } from "../styles/theme.js";
 import { getBabyAgeWeeks, formatDuration, formatDate, toDateKey, getAgeRecommendations } from "../utils/helpers.js";
 import { Icon } from "./Icon.jsx";
 
-export const TrendsDashboard = ({ state }) => {
+export const TrendsDashboard = ({ state, onAddContextNote }) => {
   const [period, setPeriod] = useState("7d"); // 7d | 14d | 30d
   const { baby, events, weightLog } = state;
   const ageWeeks = baby?.birthDate ? getBabyAgeWeeks(baby.birthDate) : 0;

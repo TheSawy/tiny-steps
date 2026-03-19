@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { C, S } from "../styles/theme.js";
 import { Icon } from "./Icon.jsx";
+import { FontLoader } from "./FontLoader.jsx";
 
 // ============================================================
 // MAIN APP

@@ -211,11 +211,11 @@ export default function App() {
         </div>
 
         {tab === "home" && <Dashboard state={state} onOpenLogger={openLogger} onStartTimer={startTimer} onStopTimer={stopTimer} onAddContextNote={addContextNote} onDeleteEvent={deleteEvent} onEditEvent={editEvent} />}
-        {tab === "trends" && <TrendsDashboard state={state} />}
+        {tab === "trends" && <TrendsDashboard state={state} onAddContextNote={addContextNote} />}
         {tab === "doctor" && <DoctorSummary state={state} onAddNote={addHealthLog} onAddContextNote={addContextNote} />}
         {tab === "activities" && <ActivitiesPage state={state} onSave={addEvent} />}
         {tab === "milestones" && <MilestonesPage state={state} onToggle={toggleMilestone} />}
-        {tab === "growth" && <GrowthPage state={state} onOpenLogger={(t) => setModal(t)} customVaccines={customVaccines} />}
+        {tab === "growth" && <GrowthPage state={state} onOpenLogger={(t) => setModal(t)} customVaccines={customVaccines} onAddContextNote={addContextNote} onAddHealthLog={addHealthLog} />}
         {tab === "settings" && <SettingsPage state={state} onUpdateBaby={updateBaby} onUpdateSettings={updateSettings} onSignOut={handleSignOut} />}
 
         <div style={S.nav}>

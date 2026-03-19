@@ -4,6 +4,7 @@ import { generateId, formatTime, formatDuration, getTimeSince, getAgeRecommendat
 import { Icon } from "./Icon.jsx";
 import { Modal } from "./Modal.jsx";
 import { TimerDisplay } from "./TimerDisplay.jsx";
+import { NextWindowBadge } from "./NextWindowBadge.jsx";
 
 // ============================================================
 // FEED LOGGER (Breast, Expression, Formula with side-aware emoji)
