@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { C, S } from "../styles/theme.js";
 import { generateId, getBabyAgeWeeks, formatAge, formatDate, formatDateFull } from "../utils/helpers.js";
 import { WHO_MILESTONES, VACCINATION_SCHEDULE_BASE } from "../data/constants.js";
@@ -20,6 +20,8 @@ export const GrowthPage = ({ state, onOpenLogger, customVaccines, onAddContextNo
 
   // Pattern insights
   const insights = useMemo(() => detectPatterns(events, baby, contextNotes || [], healthLog || []), [events, baby, contextNotes, healthLog]);
+  const [dismissedInsights, setDismissedInsights] = useState(() => { try { return JSON.parse(localStorage.getItem("dismissed_insights") || "[]"); } catch(e) { return []; } });
+  useEffect(() => { try { localStorage.setItem("dismissed_insights", JSON.stringify(dismissedInsights)); } catch(e) {} }, [dismissedInsights]);
   const [selectedInsight, setSelectedInsight] = useState(null);
   const [explanation, setExplanation] = useState("");
   const [historyView, setHistoryView] = useState(false);
@@ -63,6 +65,7 @@ export const GrowthPage = ({ state, onOpenLogger, customVaccines, onAddContextNo
     }
     setExplanation("");
     setSelectedInsight(null);
+    setDismissedInsights((p) => [...p, insight.id]);
   };
 
   const handleAcknowledge = (insight) => {
@@ -85,6 +88,7 @@ export const GrowthPage = ({ state, onOpenLogger, customVaccines, onAddContextNo
         action: "acknowledged",
       });
     }
+    setDismissedInsights((p) => [...p, insight.id]);
   };
 
   const handleDismiss = (insight, reason) => {
@@ -109,6 +113,7 @@ export const GrowthPage = ({ state, onOpenLogger, customVaccines, onAddContextNo
         action: "dismissed",
       });
     }
+    setDismissedInsights((p) => [...p, insight.id]);
   };
 
   const allVaccines = [...VACCINATION_SCHEDULE_BASE, ...customVaccines].sort((a, b) => a.weekDue - b.weekDue);
@@ -151,14 +156,14 @@ export const GrowthPage = ({ state, onOpenLogger, customVaccines, onAddContextNo
 
         {!historyView ? (
           /* ---- CURRENT INSIGHTS ---- */
-          insights.length === 0 ? (
+          insights.filter((i) => !dismissedInsights.includes(i.id)).length === 0 ? (
             <div style={{ textAlign: "center", padding: 20 }}>
               <span style={{ fontSize: 32 }}>✨</span>
               <p style={{ fontSize: 13, color: C.t3, marginTop: 8 }}>No patterns detected right now. Everything looks normal!</p>
               <p style={{ fontSize: 11, color: C.t3, marginTop: 4 }}>The engine compares recent activity against {baby?.name || "baby"}'s baseline and flags changes.</p>
             </div>
           ) : (
-            insights.map((insight) => (
+            insights.filter((i) => !dismissedInsights.includes(i.id)).map((insight) => (
               <div key={insight.id} style={{ marginBottom: 12, padding: 14, borderRadius: 14, background: insight.color + "08", border: `1.5px solid ${insight.color}20` }}>
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>

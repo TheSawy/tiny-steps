@@ -42,7 +42,22 @@ export const DoctorSummary = ({ state, onAddNote, onAddContextNote }) => {
   const latestWeight = weightLog.length > 0 ? weightLog[weightLog.length - 1] : null;
   const achievedMilestones = (milestones || []).filter((m) => m.achievedDate);
   const recentHealth = (healthLog || []).filter((h) => new Date(h.timestamp) >= start);
-  const activeNotes = (contextNotes || []).filter((n) => n.active);
+  const activeNotes = (() => {
+    const notes = (contextNotes || []).filter((n) => n.active);
+    // Deduplicate by insightId — keep only the most recent note per insight
+    const seen = new Set();
+    const deduped = [];
+    // Sort newest first so we keep the latest
+    const sorted = [...notes].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    for (const n of sorted) {
+      const key = n.insightId || n.id;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduped.push(n);
+      }
+    }
+    return deduped;
+  })();
 
   const summaryText = () => {
     let t = `BABY HEALTH SUMMARY\n`;
@@ -67,7 +82,7 @@ export const DoctorSummary = ({ state, onAddNote, onAddContextNote }) => {
     t += `• Stools: ${stools.length} total\n`;
     if (stoolColors.length) t += `• Stool colors: ${stoolColors.join(", ")}\n`;
     if (latestWeight) { t += `\nWEIGHT\n`; t += `• Latest: ${latestWeight.weight} ${latestWeight.unit} (${formatDate(latestWeight.date)})\n`; }
-    if (recentHealth.length) { t += `\nHEALTH NOTES\n`; recentHealth.forEach((h) => { t += `• ${h.emoji} ${h.label} (${formatDate(h.timestamp)})\n`; }); }
+    if (recentHealth.length) { t += `\nHEALTH NOTES\n`; recentHealth.forEach((h) => { t += `• ${h.emoji || "📋"} ${h.label || h.title || h.patternId}${h.action ? " — " + h.action : ""} (${formatDate(h.timestamp)})\n`; }); }
     if (activeNotes.length) { t += `\nACTIVE CONCERNS\n`; activeNotes.forEach((n) => { t += `• ${n.text}${n.explanation ? " — " + n.explanation : ""} (since ${formatDate(n.createdAt)})\n`; }); }
     if (achievedMilestones.length) { t += `\nMILESTONES ACHIEVED\n`; achievedMilestones.slice(-5).forEach((m) => { const def = WHO_MILESTONES.find((w) => w.id === m.milestoneId); if (def) t += `• ${def.title} (${formatDate(m.achievedDate)})\n`; }); }
     const givenVax = VACCINATION_SCHEDULE_BASE.filter((v) => givenVaccines.includes(v.name));
@@ -140,7 +155,7 @@ export const DoctorSummary = ({ state, onAddNote, onAddContextNote }) => {
         {recentHealth.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.danger, marginBottom: 4 }}>Health Notes</div>
-            {recentHealth.map((h, i) => (<div key={i} style={{ fontSize: 12, color: C.t2, padding: "2px 0" }}>{h.emoji} {h.label} — {formatDate(h.timestamp)}</div>))}
+            {recentHealth.map((h, i) => (<div key={i} style={{ fontSize: 12, color: C.t2, padding: "2px 0" }}>{h.emoji || "📋"} {h.label || h.title || h.patternId}{h.action ? ` — ${h.action}` : ""} — {formatDate(h.timestamp)}</div>))}
           </div>
         )}
 
@@ -186,7 +201,7 @@ export const DoctorSummary = ({ state, onAddNote, onAddContextNote }) => {
           </div>
         )}
         {(healthLog || []).slice(0, 10).map((h, i) => (
-          <div key={i} style={{ fontSize: 12, color: C.t2, padding: "4px 0", borderBottom: `1px solid ${C.borderL}` }}>{h.emoji || "📌"} {h.label || h.text} · {formatDate(h.timestamp)}</div>
+          <div key={i} style={{ fontSize: 12, color: C.t2, padding: "4px 0", borderBottom: `1px solid ${C.borderL}` }}>{h.emoji || "📌"} {h.label || h.title || h.text || h.patternId} · {formatDate(h.timestamp)}</div>
         ))}
         {(!healthLog || healthLog.length === 0) && <p style={{ fontSize: 12, color: C.t3 }}>No notes yet. Add observations for your next doctor visit.</p>}
       </div>
