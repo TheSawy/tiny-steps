@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -14,7 +14,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// browserLocalPersistence is the most reliable on iOS PWA
+setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+// THE FIX: persistentLocalCache enables Firestore IndexedDB caching.
+// First open: fetches from network and caches (~1-2s).
+// Every subsequent open: returns cached data instantly (<100ms), then syncs in background.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  experimentalAutoDetectLongPolling: true,
+});
 
 let messaging = null;
 export const getMessagingInstance = async () => {

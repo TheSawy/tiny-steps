@@ -7,9 +7,10 @@ import { Icon } from "./Icon.jsx";
 export const SettingsPage = ({ state, onUpdateBaby, onUpdateSettings, onSignOut, userEmail }) => {
   const [babyName, setBabyName] = useState(state.baby?.name || "");
   const [birthDate, setBirthDate] = useState(state.baby?.birthDate || "");
+  const [birthWeight, setBirthWeight] = useState(state.baby?.birthWeight || "");
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => { onUpdateBaby({ name: babyName, birthDate: birthDate || null }); setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const handleSave = () => { onUpdateBaby({ name: babyName, birthDate: birthDate || null, birthWeight: birthWeight ? parseFloat(birthWeight) : null }); setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
   const exportCSV = () => {
     const rows = [["Timestamp", "Type", "Details", "Duration (min)", "Notes"]];
@@ -44,7 +45,9 @@ export const SettingsPage = ({ state, onUpdateBaby, onUpdateSettings, onSignOut,
         <label style={S.label}>Name</label>
         <input style={{ ...S.input, marginBottom: 12 }} value={babyName} onChange={(e) => setBabyName(e.target.value)} />
         <label style={S.label}>Birth Date</label>
-        <input style={{ ...S.input, marginBottom: 16 }} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+        <input style={{ ...S.input, marginBottom: 12 }} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+        <label style={S.label}>Birth Weight (kg)</label>
+        <input style={{ ...S.input, marginBottom: 16 }} type="number" step="0.01" value={birthWeight} onChange={(e) => setBirthWeight(e.target.value)} placeholder="e.g. 3.47" />
         <button style={{ ...S.btn("primary"), width: "100%" }} onClick={handleSave}>{saved ? "✓ Saved!" : "Save Changes"}</button>
       </div>
 

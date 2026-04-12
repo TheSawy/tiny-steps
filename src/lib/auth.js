@@ -74,4 +74,7 @@ export const getUserFamily = async (uid) => {
   const d = await getDoc(doc(db, 'users', uid));
   return d.exists() ? d.data().familyId : null;
 };
+
+// Attach listener immediately — no delay, no persistence await.
+// Firebase handles persistence internally before firing the first callback.
 export const onAuthChange = (cb) => onAuthStateChanged(auth, cb);

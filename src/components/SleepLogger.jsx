@@ -13,11 +13,29 @@ export const SleepLogger = ({ isOpen, onClose, onSave, activeTimer, onStartTimer
   const [mode, setMode] = useState("timer");
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
+  const [manualDurationMins, setManualDurationMins] = useState("");
+  const [manualMode, setManualMode] = useState("start_end"); // start_end | start_duration
   const [notes, setNotes] = useState("");
   const [showContext, setShowContext] = useState(false);
   const [contextText, setContextText] = useState("");
   const isTimerActive = activeTimer?.type === "sleep";
   const recs = ageWeeks !== null ? getAgeRecommendations(ageWeeks) : null;
+
+  const calcDuration = () => {
+    if (manualMode === "start_duration" && manualDurationMins) return parseInt(manualDurationMins) * 60000;
+    if (manualStart && manualEnd) {
+      const dur = new Date(manualEnd).getTime() - new Date(manualStart).getTime();
+      return dur > 0 ? dur : 0;
+    }
+    return 0;
+  };
+
+  const calcEnd = () => {
+    if (manualMode === "start_duration" && manualStart && manualDurationMins) {
+      return new Date(new Date(manualStart).getTime() + parseInt(manualDurationMins) * 60000).toISOString();
+    }
+    return manualEnd ? new Date(manualEnd).toISOString() : null;
+  };
 
   const activeSleepNotes = (contextNotes || []).filter((n) => n.active && (n.category === "sleep" || n.category === "general"));
 
@@ -43,13 +61,12 @@ export const SleepLogger = ({ isOpen, onClose, onSave, activeTimer, onStartTimer
     setNotes(""); onClose();
   };
   const handleSaveManual = () => {
-    if (!manualStart || !manualEnd) return;
-    const start = new Date(manualStart);
-    const end = new Date(manualEnd);
-    const dur = end.getTime() - start.getTime();
-    if (dur <= 0) return;
-    onSave({ id: generateId(), type: "sleep", timestamp: start.toISOString(), endTime: end.toISOString(), duration: dur, notes });
-    setManualStart(""); setManualEnd(""); setNotes(""); onClose();
+    if (!manualStart) return;
+    const dur = calcDuration();
+    const end = calcEnd();
+    if (!dur || !end) return;
+    onSave({ id: generateId(), type: "sleep", timestamp: new Date(manualStart).toISOString(), endTime: end, duration: dur, notes });
+    setManualStart(""); setManualEnd(""); setManualDurationMins(""); setNotes(""); onClose();
   };
 
   return (
@@ -113,26 +130,36 @@ export const SleepLogger = ({ isOpen, onClose, onSave, activeTimer, onStartTimer
 
       {mode === "manual" && (
         <div style={{ padding: 16, background: C.sleepL, borderRadius: 16, marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            <button style={{ ...S.chip(manualMode === "start_end", C.sleep), flex: 1, fontSize: 11 }} onClick={() => setManualMode("start_end")}>Start & End</button>
+            <button style={{ ...S.chip(manualMode === "start_duration", C.sleep), flex: 1, fontSize: 11 }} onClick={() => setManualMode("start_duration")}>Start & Duration</button>
+          </div>
           <label style={S.label}>Fell Asleep</label>
           <input style={{ ...S.input, marginBottom: 12 }} type="datetime-local" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
-          <label style={S.label}>Woke Up</label>
-          <input style={{ ...S.input, marginBottom: 12 }} type="datetime-local" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
-          {manualStart && manualEnd && new Date(manualEnd) > new Date(manualStart) && (
+          {manualMode === "start_end" ? (
+            <>
+              <label style={S.label}>Woke Up</label>
+              <input style={{ ...S.input, marginBottom: 8 }} type="datetime-local" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
+            </>
+          ) : (
+            <>
+              <label style={S.label}>Duration (minutes)</label>
+              <input style={{ ...S.input, marginBottom: 8 }} type="number" value={manualDurationMins} onChange={(e) => setManualDurationMins(e.target.value)} placeholder="e.g. 45" />
+            </>
+          )}
+          {calcDuration() > 0 && (
             <div style={{ textAlign: "center", padding: 8, fontSize: 20, fontWeight: 700, color: C.sleep }}>
-              {formatDuration(new Date(manualEnd).getTime() - new Date(manualStart).getTime())}
+              {formatDuration(calcDuration())}
             </div>
           )}
         </div>
       )}
 
-      {/* Next Sleep Window — gentle, context-aware */}
-      {recs && lastSleep && (
-        <NextWindowBadge label="Sleep" lastTimestamp={lastSleep.endTime || lastSleep.timestamp} intervalMins={recs.sleepWake} contextNotes={contextNotes} />
-      )}
+      {recs && lastSleep && <div style={{ marginBottom: 12 }}><NextWindowBadge label="Sleep" lastTimestamp={lastSleep.endTime || lastSleep.timestamp} intervalMins={recs.sleepWake} /></div>}
 
       <label style={{ ...S.label, marginTop: 12 }}>Notes</label>
       <input style={{ ...S.input, marginBottom: 20 }} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. nap location, fussiness..." />
-      {mode === "manual" && <button style={{ ...S.btn("primary"), width: "100%", background: C.sleep, opacity: manualStart && manualEnd ? 1 : 0.5 }} onClick={handleSaveManual}>Save Sleep</button>}
+      {mode === "manual" && <button style={{ ...S.btn("primary"), width: "100%", background: C.sleep, opacity: manualStart && calcDuration() > 0 ? 1 : 0.5 }} onClick={handleSaveManual}>Save Sleep</button>}
       {mode === "timer" && !isTimerActive && <button style={{ ...S.btn("primary"), width: "100%", background: C.sleep }} onClick={handleSaveTimer}>Save Sleep</button>}
     </Modal>
   );

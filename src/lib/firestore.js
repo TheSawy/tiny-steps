@@ -1,6 +1,6 @@
 import {
   doc, collection, addDoc, setDoc, updateDoc, deleteDoc, getDoc,
-  query, orderBy, onSnapshot, serverTimestamp, arrayUnion, arrayRemove,
+  query, orderBy, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, limit, where,
 } from 'firebase/firestore';
 import { db } from './firebase.js';
 
@@ -13,7 +13,8 @@ export const updateSettings = (fid, settings) => updateDoc(doc(db, 'families', f
 const evCol = (fid) => collection(db, 'families', fid, 'events');
 export const addEvent = (fid, ev) => addDoc(evCol(fid), { ...ev, createdAt: serverTimestamp() });
 export const deleteEvent = (fid, eid) => deleteDoc(doc(db, 'families', fid, 'events', eid));
-export const onAllEvents = (fid, cb) => onSnapshot(query(evCol(fid), orderBy('timestamp', 'desc')), (s) => cb(s.docs.map((d) => ({ ...d.data(), id: d.id }))));
+export const onAllEvents = (fid, cb) => onSnapshot(query(evCol(fid), orderBy('timestamp', 'desc'), limit(200)), (s) => cb(s.docs.map((d) => ({ ...d.data(), id: d.id }))));
+export const onAllEventsFull = (fid, cb) => onSnapshot(query(evCol(fid), orderBy('timestamp', 'desc')), (s) => cb(s.docs.map((d) => ({ ...d.data(), id: d.id }))));
 
 // Weights
 const wCol = (fid) => collection(db, 'families', fid, 'weights');

@@ -4,7 +4,7 @@ import { formatTime, formatDuration } from "../utils/helpers.js";
 import { Icon } from "./Icon.jsx";
 
 // ============================================================
-// EDIT EVENT FORM
+// EDIT EVENT FORM — with start/end time editing
 // ============================================================
 export const EditEventForm = ({ event, onSave, onCancel }) => {
   const [notes, setNotes] = useState(event.notes || "");
@@ -12,10 +12,43 @@ export const EditEventForm = ({ event, onSave, onCancel }) => {
   const [side, setSide] = useState(event.side || "");
   const [content, setContent] = useState(event.content || "");
   const [stoolColor, setStoolColor] = useState(event.stoolColor || "");
-  const [durationMins, setDurationMins] = useState(event.duration ? Math.round(event.duration / 60000) : "");
+
+  // Time editing
+  const toLocal = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [startTime, setStartTime] = useState(toLocal(event.timestamp));
+  const [endTime, setEndTime] = useState(toLocal(event.endTime));
+
+  const calcDuration = () => {
+    if (startTime && endTime) {
+      const dur = new Date(endTime).getTime() - new Date(startTime).getTime();
+      return dur > 0 ? dur : null;
+    }
+    return null;
+  };
+  const calculatedDur = calcDuration();
 
   return (
     <div>
+      {/* Start / End time — all event types */}
+      <label style={S.label}>Started</label>
+      <input style={{ ...S.input, marginBottom: 12 }} type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+      {(event.type === "feed" || event.type === "sleep") && (
+        <>
+          <label style={S.label}>Ended</label>
+          <input style={{ ...S.input, marginBottom: 8 }} type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          {calculatedDur && (
+            <div style={{ fontSize: 12, fontWeight: 600, color: event.type === "feed" ? C.feed : C.sleep, marginBottom: 12, textAlign: "center" }}>
+              Duration: {formatDuration(calculatedDur)}
+            </div>
+          )}
+        </>
+      )}
+
       {event.type === "feed" && (
         <>
           {event.feedType === "breast" && (
@@ -26,8 +59,6 @@ export const EditEventForm = ({ event, onSave, onCancel }) => {
               </div>
             </>
           )}
-          <label style={S.label}>Duration (minutes)</label>
-          <input style={{ ...S.input, marginBottom: 12 }} type="number" value={durationMins} onChange={(e) => setDurationMins(e.target.value)} />
           {(event.feedType === "expression" || event.feedType === "formula") && (
             <><label style={S.label}>Amount (ml)</label><input style={{ ...S.input, marginBottom: 12 }} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></>
           )}
@@ -51,19 +82,21 @@ export const EditEventForm = ({ event, onSave, onCancel }) => {
           )}
         </>
       )}
-      {event.type === "sleep" && (
-        <><label style={S.label}>Duration (minutes)</label><input style={{ ...S.input, marginBottom: 12 }} type="number" value={durationMins} onChange={(e) => setDurationMins(e.target.value)} /></>
-      )}
       <label style={S.label}>Notes</label>
       <input style={{ ...S.input, marginBottom: 16 }} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add or edit notes..." />
       <div style={{ display: "flex", gap: 8 }}>
         <button style={{ ...S.btn("primary"), flex: 1 }} onClick={() => {
           const updates = { notes };
+          if (startTime) updates.timestamp = new Date(startTime).toISOString();
+          if (endTime) updates.endTime = new Date(endTime).toISOString();
+          if (startTime && endTime) {
+            const dur = new Date(endTime).getTime() - new Date(startTime).getTime();
+            if (dur > 0) updates.duration = dur;
+          }
           if (side) updates.side = side;
           if (amount) updates.amount = parseFloat(amount);
           if (content) updates.content = content;
           if (stoolColor && content !== "wet") updates.stoolColor = stoolColor;
-          if (durationMins) updates.duration = parseInt(durationMins) * 60000;
           onSave(updates);
         }}>Save Changes</button>
         <button style={{ ...S.btn("secondary"), flex: 1 }} onClick={onCancel}>Cancel</button>
@@ -71,4 +104,3 @@ export const EditEventForm = ({ event, onSave, onCancel }) => {
     </div>
   );
 };
-
